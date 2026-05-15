@@ -19,7 +19,7 @@
           <input id="authName" placeholder="Your name" />
           <input id="authEmail" type="email" placeholder="example@gmail.com" required />
           <div class="auth-actions">
-            <button type="submit" data-auth-action="login">Login / Signup</button>
+            <button type="submit" class="google-btn" data-auth-action="login">Sign in with Google</button>
           </div>
           <p id="authMessage" class="form-message"></p>
         </form>
@@ -137,7 +137,8 @@
           <form id="memberForm" class="inline-form">
             <input id="memberName" placeholder="Name" required />
             <input id="memberPhone" placeholder="WhatsApp number" />
-            <button>Add member</button>
+            <button id="memberSubmitBtn">Add member</button>
+            <button id="memberCancelBtn" type="button" class="ghost hidden">Cancel</button>
           </form>
         </div>
         <div id="memberCards" class="cards"></div>
@@ -153,13 +154,14 @@
             <select id="paymentMember"></select>
             <input id="paymentDate" type="date" required />
             <input id="paymentAmount" type="number" min="0" placeholder="Tk" required />
-            <button>Add joma</button>
+            <button id="paymentSubmitBtn">Add joma</button>
+            <button id="paymentCancelBtn" type="button" class="ghost hidden">Cancel</button>
           </form>
         </div>
         <div class="table-wrap">
           <table>
             <thead>
-              <tr><th>Date</th><th>Name</th><th>Amount</th><th>Note</th></tr>
+              <tr><th>Date</th><th>Name</th><th>Amount</th><th>Note</th><th>Action</th></tr>
             </thead>
             <tbody id="paymentRows"></tbody>
           </table>
@@ -185,13 +187,14 @@
             </select>
             <input id="expenseItem" placeholder="Item/note" />
             <input id="expenseAmount" type="number" min="0" placeholder="Tk" required />
-            <button>Add khoros</button>
+            <button id="expenseSubmitBtn">Add khoros</button>
+            <button id="expenseCancelBtn" type="button" class="ghost hidden">Cancel</button>
           </form>
         </div>
         <div class="table-wrap">
           <table>
             <thead>
-              <tr><th>Date</th><th>Category</th><th>Item</th><th>Amount</th></tr>
+              <tr><th>Date</th><th>Category</th><th>Item</th><th>Amount</th><th>Action</th></tr>
             </thead>
             <tbody id="expenseRows"></tbody>
           </table>
@@ -209,13 +212,14 @@
             <select id="bazarMemberA"></select>
             <select id="bazarMemberB"></select>
             <input id="bazarAdvance" type="number" min="0" placeholder="Advance" />
-            <button>Add duty</button>
+            <button id="bazarSubmitBtn">Add duty</button>
+            <button id="bazarCancelBtn" type="button" class="ghost hidden">Cancel</button>
           </form>
         </div>
         <div class="table-wrap">
           <table>
             <thead>
-              <tr><th>Date</th><th>Members</th><th>Advance</th><th>Spent</th><th>Return</th><th>List</th></tr>
+              <tr><th>Date</th><th>Members</th><th>Advance</th><th>Spent</th><th>Return</th><th>List</th><th>Action</th></tr>
             </thead>
             <tbody id="bazarRows"></tbody>
           </table>
@@ -236,7 +240,7 @@
         <div class="table-wrap">
           <table>
             <thead>
-              <tr><th>Name</th><th>Gmail</th><th>Role</th><th>Can edit</th></tr>
+              <tr><th>Name</th><th>Gmail</th><th>Role</th><th>Can edit</th><th>Action</th></tr>
             </thead>
             <tbody id="roleRows"></tbody>
           </table>

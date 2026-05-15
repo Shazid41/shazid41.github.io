@@ -69,6 +69,26 @@ body.locked .auth-screen {
   gap: 8px;
 }
 
+.google-btn {
+  width: 100%;
+  background: #ffffff;
+  color: #101418;
+  border: 1px solid var(--line);
+  font-weight: 700;
+}
+
+.google-btn::before {
+  content: "G";
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  margin-right: 10px;
+  border-radius: 50%;
+  color: #0f766e;
+  background: #e6efec;
+}
+
 .form-message {
   min-height: 20px;
   margin-bottom: 0;
@@ -183,6 +203,35 @@ input:disabled,
 select:disabled {
   cursor: not-allowed;
   opacity: 0.58;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.row-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.row-actions button {
+  min-height: 34px;
+  padding: 7px 10px;
+}
+
+.danger {
+  background: var(--danger);
+}
+
+tr.clickable,
+.member-card.clickable {
+  cursor: pointer;
+}
+
+tr.clickable:hover td,
+.member-card.clickable:hover {
+  background: #f4faf7;
 }
 
 .readonly-banner {
@@ -357,6 +406,11 @@ tr:last-child td {
 .member-card span {
   color: var(--muted);
   font-size: 13px;
+}
+
+.member-card .row-actions {
+  margin-top: 12px;
+  justify-content: flex-start;
 }
 
 textarea#reportText {

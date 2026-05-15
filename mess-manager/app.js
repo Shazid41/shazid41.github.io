@@ -36,6 +36,12 @@ const isoMonth = isoDate.slice(0, 7);
 
 const state = loadState();
 const auth = loadAuth();
+const editing = {
+  memberId: "",
+  paymentId: "",
+  expenseId: "",
+  bazarId: "",
+};
 
 function loadAuth() {
   const saved = localStorage.getItem(AUTH_KEY);
@@ -145,6 +151,22 @@ function isGmail(email) {
   return /^[^\s@]+@gmail\.com$/i.test(email);
 }
 
+function rowActions(type, id) {
+  if (!isManager()) return "";
+  return `<div class="row-actions">
+    <button type="button" class="edit-btn" data-type="${type}" data-id="${id}">Edit</button>
+    <button type="button" class="danger delete-btn" data-type="${type}" data-id="${id}">Delete</button>
+  </div>`;
+}
+
+function setEditing(type, id = "") {
+  editing[`${type}Id`] = id;
+  const submit = document.getElementById(`${type}SubmitBtn`);
+  const cancel = document.getElementById(`${type}CancelBtn`);
+  if (submit) submit.textContent = id ? `Update ${type}` : `Add ${type === "payment" ? "joma" : type}`;
+  if (cancel) cancel.classList.toggle("hidden", !id);
+}
+
 function mealValue(entry) {
   if (!entry) return 0;
   return (
@@ -248,9 +270,10 @@ function renderDashboard() {
 function renderMembers() {
   document.getElementById("memberCards").innerHTML = state.members
     .map(
-      (member) => `<div class="member-card">
+      (member) => `<div class="member-card clickable" data-type="member" data-id="${member.id}">
         <strong>${member.serial}. ${member.name}</strong>
         <span>${member.phone || "No phone added"}</span>
+        ${rowActions("member", member.id)}
       </div>`,
     )
     .join("");
@@ -266,16 +289,22 @@ function renderMembers() {
 function renderRoles() {
   const rows = auth.users
     .map(
-      (user) => `<tr>
-        <td>${user.name || "No name"}</td>
+      (user) => `<tr class="clickable" data-type="role" data-id="${user.email}">
+        <td><input class="role-name" data-email="${user.email}" value="${user.name || ""}" ${isManager() ? "" : "disabled"}></td>
         <td>${user.email}</td>
-        <td>${user.role}</td>
+        <td>
+          <select class="role-select" data-email="${user.email}" ${isManager() ? "" : "disabled"}>
+            <option value="member" ${user.role === "member" ? "selected" : ""}>member</option>
+            <option value="manager" ${user.role === "manager" ? "selected" : ""}>manager</option>
+          </select>
+        </td>
         <td>${user.role === "manager" ? "Yes" : "No"}</td>
+        <td>${rowActions("role", user.email)}</td>
       </tr>`,
     )
     .join("");
   document.getElementById("roleRows").innerHTML =
-    rows || `<tr><td colspan="4">No signed-up users yet.</td></tr>`;
+    rows || `<tr><td colspan="5">No signed-up users yet.</td></tr>`;
 
   document.getElementById("roleUserSelect").innerHTML = auth.users
     .map((user) => `<option value="${user.email}">${user.name || user.email} - ${user.role}</option>`)
@@ -315,11 +344,12 @@ function renderPayments() {
   const byMember = new Map(state.members.map((member) => [member.id, member.name]));
   document.getElementById("paymentRows").innerHTML = state.payments
     .map(
-      (payment) => `<tr>
+      (payment) => `<tr class="clickable" data-type="payment" data-id="${payment.id}">
         <td>${payment.date}</td>
         <td>${byMember.get(payment.memberId) || "Unknown"}</td>
         <td class="number">${money(payment.amount)}</td>
         <td>${payment.note || ""}</td>
+        <td>${rowActions("payment", payment.id)}</td>
       </tr>`,
     )
     .join("");
@@ -328,11 +358,12 @@ function renderPayments() {
 function renderExpenses() {
   document.getElementById("expenseRows").innerHTML = state.expenses
     .map(
-      (expense) => `<tr>
+      (expense) => `<tr class="clickable" data-type="expense" data-id="${expense.id}">
         <td>${expense.date}</td>
         <td>${expense.category}</td>
         <td>${expense.item || ""}</td>
         <td class="number">${money(expense.amount)}</td>
+        <td>${rowActions("expense", expense.id)}</td>
       </tr>`,
     )
     .join("");
@@ -346,13 +377,14 @@ function renderBazar() {
         .filter((expense) => expense.date === duty.date && ["food", "rice"].includes(expense.category))
         .reduce((sum, expense) => sum + Number(expense.amount || 0), 0);
       const returned = Number(duty.advance || 0) - spent;
-      return `<tr>
+      return `<tr class="clickable" data-type="bazar" data-id="${duty.id}">
         <td>${duty.date}</td>
         <td>${byMember.get(duty.memberA)} + ${byMember.get(duty.memberB)}</td>
         <td class="number">${money(duty.advance || 0)}</td>
         <td class="number">${money(spent)}</td>
         <td class="number">${money(returned)}</td>
         <td>${duty.list || "Rice, fish, vegetable, oil, spice"}</td>
+        <td>${rowActions("bazar", duty.id)}</td>
       </tr>`;
     })
     .join("");
@@ -486,14 +518,23 @@ document.getElementById("saveMealsBtn").addEventListener("click", () => {
 document.getElementById("memberForm").addEventListener("submit", (event) => {
   event.preventDefault();
   if (!requireManager()) return;
-  state.members.push({
-    id: crypto.randomUUID(),
+  const payload = {
     name: document.getElementById("memberName").value.trim(),
     phone: document.getElementById("memberPhone").value.trim(),
-    active: true,
-    serial: state.members.length + 1,
-  });
+  };
+  if (editing.memberId) {
+    const member = state.members.find((item) => item.id === editing.memberId);
+    if (member) Object.assign(member, payload);
+  } else {
+    state.members.push({
+      id: crypto.randomUUID(),
+      ...payload,
+      active: true,
+      serial: state.members.length + 1,
+    });
+  }
   event.target.reset();
+  setEditing("member");
   saveState();
   renderAll();
 });
@@ -501,14 +542,20 @@ document.getElementById("memberForm").addEventListener("submit", (event) => {
 document.getElementById("paymentForm").addEventListener("submit", (event) => {
   event.preventDefault();
   if (!requireManager()) return;
-  state.payments.push({
-    id: crypto.randomUUID(),
+  const payload = {
     memberId: document.getElementById("paymentMember").value,
     date: document.getElementById("paymentDate").value,
     amount: Number(document.getElementById("paymentAmount").value || 0),
     note: "Manual entry",
-  });
+  };
+  if (editing.paymentId) {
+    const payment = state.payments.find((item) => item.id === editing.paymentId);
+    if (payment) Object.assign(payment, payload);
+  } else {
+    state.payments.push({ id: crypto.randomUUID(), ...payload });
+  }
   event.target.reset();
+  setEditing("payment");
   document.getElementById("paymentDate").value = isoDate;
   saveState();
   renderAll();
@@ -517,14 +564,20 @@ document.getElementById("paymentForm").addEventListener("submit", (event) => {
 document.getElementById("expenseForm").addEventListener("submit", (event) => {
   event.preventDefault();
   if (!requireManager()) return;
-  state.expenses.push({
-    id: crypto.randomUUID(),
+  const payload = {
     date: document.getElementById("expenseDate").value,
     category: document.getElementById("expenseCategory").value,
     item: document.getElementById("expenseItem").value.trim(),
     amount: Number(document.getElementById("expenseAmount").value || 0),
-  });
+  };
+  if (editing.expenseId) {
+    const expense = state.expenses.find((item) => item.id === editing.expenseId);
+    if (expense) Object.assign(expense, payload);
+  } else {
+    state.expenses.push({ id: crypto.randomUUID(), ...payload });
+  }
   event.target.reset();
+  setEditing("expense");
   document.getElementById("expenseDate").value = isoDate;
   saveState();
   renderAll();
@@ -533,15 +586,21 @@ document.getElementById("expenseForm").addEventListener("submit", (event) => {
 document.getElementById("bazarForm").addEventListener("submit", (event) => {
   event.preventDefault();
   if (!requireManager()) return;
-  state.bazar.push({
-    id: crypto.randomUUID(),
+  const payload = {
     date: document.getElementById("bazarDate").value,
     memberA: document.getElementById("bazarMemberA").value,
     memberB: document.getElementById("bazarMemberB").value,
     advance: Number(document.getElementById("bazarAdvance").value || 0),
     list: "Rice, dal, fish/meat, vegetable, oil, spice",
-  });
+  };
+  if (editing.bazarId) {
+    const duty = state.bazar.find((item) => item.id === editing.bazarId);
+    if (duty) Object.assign(duty, payload);
+  } else {
+    state.bazar.push({ id: crypto.randomUUID(), ...payload });
+  }
   event.target.reset();
+  setEditing("bazar");
   document.getElementById("bazarDate").value = isoDate;
   saveState();
   renderAll();
@@ -555,6 +614,145 @@ document.getElementById("seedBtn").addEventListener("click", () => {
   if (!requireManager()) return;
   localStorage.removeItem(STORAGE_KEY);
   location.reload();
+});
+
+function editItem(type, id) {
+  if (!requireManager()) return;
+  if (type === "member") {
+    const member = state.members.find((item) => item.id === id);
+    if (!member) return;
+    document.getElementById("memberName").value = member.name;
+    document.getElementById("memberPhone").value = member.phone || "";
+    setEditing("member", id);
+    document.getElementById("memberName").focus();
+  }
+  if (type === "payment") {
+    const payment = state.payments.find((item) => item.id === id);
+    if (!payment) return;
+    document.getElementById("paymentMember").value = payment.memberId;
+    document.getElementById("paymentDate").value = payment.date;
+    document.getElementById("paymentAmount").value = payment.amount;
+    setEditing("payment", id);
+    document.getElementById("paymentAmount").focus();
+  }
+  if (type === "expense") {
+    const expense = state.expenses.find((item) => item.id === id);
+    if (!expense) return;
+    document.getElementById("expenseDate").value = expense.date;
+    document.getElementById("expenseCategory").value = expense.category;
+    document.getElementById("expenseItem").value = expense.item || "";
+    document.getElementById("expenseAmount").value = expense.amount;
+    setEditing("expense", id);
+    document.getElementById("expenseItem").focus();
+  }
+  if (type === "bazar") {
+    const duty = state.bazar.find((item) => item.id === id);
+    if (!duty) return;
+    document.getElementById("bazarDate").value = duty.date;
+    document.getElementById("bazarMemberA").value = duty.memberA;
+    document.getElementById("bazarMemberB").value = duty.memberB;
+    document.getElementById("bazarAdvance").value = duty.advance || "";
+    setEditing("bazar", id);
+    document.getElementById("bazarAdvance").focus();
+  }
+  if (type === "role") {
+    document.querySelector(`.role-name[data-email="${CSS.escape(id)}"]`)?.focus();
+  }
+}
+
+function deleteItem(type, id) {
+  if (!requireManager()) return;
+  if (!confirm(`Delete this ${type}?`)) return;
+  if (type === "member") {
+    state.members = state.members.filter((item) => item.id !== id);
+    state.payments = state.payments.filter((item) => item.memberId !== id);
+    state.bazar = state.bazar.filter((item) => item.memberA !== id && item.memberB !== id);
+    Object.values(state.meals).forEach((day) => delete day[id]);
+    state.members.forEach((member, index) => (member.serial = index + 1));
+    saveState();
+  }
+  if (type === "payment") {
+    state.payments = state.payments.filter((item) => item.id !== id);
+    saveState();
+  }
+  if (type === "expense") {
+    state.expenses = state.expenses.filter((item) => item.id !== id);
+    saveState();
+  }
+  if (type === "bazar") {
+    state.bazar = state.bazar.filter((item) => item.id !== id);
+    saveState();
+  }
+  if (type === "role") {
+    const user = auth.users.find((item) => item.email === id);
+    if (user?.role === "manager" && auth.users.filter((item) => item.role === "manager").length === 1) {
+      alert("At least one manager must remain.");
+      return;
+    }
+    auth.users = auth.users.filter((item) => item.email !== id);
+    if (auth.currentEmail === id) auth.currentEmail = "";
+    saveAuth();
+  }
+  setEditing("member");
+  setEditing("payment");
+  setEditing("expense");
+  setEditing("bazar");
+  renderAuth();
+}
+
+document.addEventListener("click", (event) => {
+  const editButton = event.target.closest(".edit-btn");
+  const deleteButton = event.target.closest(".delete-btn");
+  const clickable = event.target.closest(".clickable");
+
+  if (editButton) {
+    event.stopPropagation();
+    editItem(editButton.dataset.type, editButton.dataset.id);
+    return;
+  }
+
+  if (deleteButton) {
+    event.stopPropagation();
+    deleteItem(deleteButton.dataset.type, deleteButton.dataset.id);
+    return;
+  }
+
+  if (clickable && isManager() && !event.target.matches("input, select, button, a")) {
+    editItem(clickable.dataset.type, clickable.dataset.id);
+  }
+});
+
+["member", "payment", "expense", "bazar"].forEach((type) => {
+  document.getElementById(`${type}CancelBtn`)?.addEventListener("click", () => {
+    document.getElementById(`${type}Form`).reset();
+    setEditing(type);
+    if (type !== "member") document.getElementById(`${type}Date`).value = isoDate;
+  });
+});
+
+document.getElementById("roleRows").addEventListener("change", (event) => {
+  if (!requireManager()) return;
+  const email = event.target.dataset.email;
+  const user = auth.users.find((item) => item.email === email);
+  if (!user) return;
+
+  if (event.target.classList.contains("role-name")) {
+    user.name = event.target.value.trim();
+  }
+
+  if (event.target.classList.contains("role-select")) {
+    const nextRole = event.target.value;
+    const currentManagers = auth.users.filter((item) => item.role === "manager").length;
+    if (user.role === "manager" && nextRole !== "manager" && currentManagers === 1) {
+      alert("At least one manager must remain.");
+      event.target.value = "manager";
+      return;
+    }
+    user.role = nextRole;
+  }
+
+  saveAuth();
+  renderAuth();
 });
 
 document.getElementById("authForm").addEventListener("submit", (event) => {
