@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="bn">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mess Manager - Meal & Bazar Hisab</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Mess Manager</p>
+        <h1>Meal, Bazar, Joma, Khoros - shob ek jaygay</h1>
+      </div>
+      <div class="month-control">
+        <label for="monthInput">Month</label>
+        <input id="monthInput" type="month" />
+      </div>
+    </header>
+
+    <main>
+      <section class="stats-grid" id="statsGrid"></section>
+
+      <nav class="tabs" aria-label="App sections">
+        <button class="tab active" data-tab="dashboard">Dashboard</button>
+        <button class="tab" data-tab="meals">Daily Meal</button>
+        <button class="tab" data-tab="members">Members</button>
+        <button class="tab" data-tab="payments">Joma</button>
+        <button class="tab" data-tab="expenses">Khoros</button>
+        <button class="tab" data-tab="bazar">Bazar</button>
+        <button class="tab" data-tab="report">Report</button>
+        <button class="tab" data-tab="blueprint">Project Plan</button>
+      </nav>
+
+      <section class="panel active" id="dashboard">
+        <div class="section-head">
+          <div>
+            <h2>Live Monitor</h2>
+            <p>Food khoros theke meal rate, onnanno khoros member-wise, aar ke koto pabe/dibe.</p>
+          </div>
+          <button id="seedBtn" class="ghost">Demo data reset</button>
+        </div>
+        <div class="two-column">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Actual meal</th>
+                  <th>Guest</th>
+                  <th>Billable</th>
+                  <th>Total bill</th>
+                  <th>Joma</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="dashboardRows"></tbody>
+            </table>
+          </div>
+          <aside class="note-panel">
+            <h3>Rules set kora ache</h3>
+            <ul>
+              <li>Breakfast = 0.5, lunch = 1, dinner = 1.</li>
+              <li>Full day F = 2.5 meal.</li>
+              <li>Active member minimum billable meal = 50.</li>
+              <li>Pure zero meal hole minimum 25 meal dhora hoy.</li>
+              <li>Guest meal fixed meal-er upore add hoy.</li>
+              <li>Mess-e thakle breakfast required flag dekhabe.</li>
+            </ul>
+          </aside>
+        </div>
+      </section>
+
+      <section class="panel" id="meals">
+        <div class="section-head">
+          <div>
+            <h2>Daily Meal Entry</h2>
+            <p>Board-er moto shokal, dupur, raat entry. Blank mane off.</p>
+          </div>
+          <div class="inline-form">
+            <input id="mealDate" type="date" />
+            <button id="saveMealsBtn">Save meals</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Staying</th>
+                <th>Breakfast</th>
+                <th>Lunch</th>
+                <th>Dinner</th>
+                <th>Guest meal</th>
+                <th>Total</th>
+                <th>Warning</th>
+              </tr>
+            </thead>
+            <tbody id="mealRows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel" id="members">
+        <div class="section-head">
+          <div>
+            <h2>Member Notebook</h2>
+            <p>প্রতি member-এর profile, phone, active status, fixed rule.</p>
+          </div>
+          <form id="memberForm" class="inline-form">
+            <input id="memberName" placeholder="Name" required />
+            <input id="memberPhone" placeholder="WhatsApp number" />
+            <button>Add member</button>
+          </form>
+        </div>
+        <div id="memberCards" class="cards"></div>
+      </section>
+
+      <section class="panel" id="payments">
+        <div class="section-head">
+          <div>
+            <h2>Joma Entry</h2>
+            <p>10 tarik 1000, 20 tarik 1000, 30 tarik 500 - installment track.</p>
+          </div>
+          <form id="paymentForm" class="inline-form">
+            <select id="paymentMember"></select>
+            <input id="paymentDate" type="date" required />
+            <input id="paymentAmount" type="number" min="0" placeholder="Tk" required />
+            <button>Add joma</button>
+          </form>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Date</th><th>Name</th><th>Amount</th><th>Note</th></tr>
+            </thead>
+            <tbody id="paymentRows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel" id="expenses">
+        <div class="section-head">
+          <div>
+            <h2>Khoros Entry</h2>
+            <p>Food item meal rate-e jabe; wifi/gas/current/khala/extra member-wise vag hobe.</p>
+          </div>
+          <form id="expenseForm" class="inline-form">
+            <input id="expenseDate" type="date" required />
+            <select id="expenseCategory">
+              <option value="food">Food/Bazar</option>
+              <option value="rice">Chaul</option>
+              <option value="gas">Gas</option>
+              <option value="wifi">Wifi</option>
+              <option value="current">Current</option>
+              <option value="khala">Khala</option>
+              <option value="extra">Extra item</option>
+            </select>
+            <input id="expenseItem" placeholder="Item/note" />
+            <input id="expenseAmount" type="number" min="0" placeholder="Tk" required />
+            <button>Add khoros</button>
+          </form>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Date</th><th>Category</th><th>Item</th><th>Amount</th></tr>
+            </thead>
+            <tbody id="expenseRows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel" id="bazar">
+        <div class="section-head">
+          <div>
+            <h2>Bazar Schedule</h2>
+            <p>প্রতি ৪ দিন পর ২ জন করে duty, advance taka, list, return taka.</p>
+          </div>
+          <form id="bazarForm" class="inline-form">
+            <input id="bazarDate" type="date" required />
+            <select id="bazarMemberA"></select>
+            <select id="bazarMemberB"></select>
+            <input id="bazarAdvance" type="number" min="0" placeholder="Advance" />
+            <button>Add duty</button>
+          </form>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Date</th><th>Members</th><th>Advance</th><th>Spent</th><th>Return</th><th>List</th></tr>
+            </thead>
+            <tbody id="bazarRows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel" id="report">
+        <div class="section-head">
+          <div>
+            <h2>Month-end Report</h2>
+            <p>খাতার final page-er moto individual settlement and WhatsApp message.</p>
+          </div>
+          <button id="copyReportBtn">Copy summary</button>
+        </div>
+        <textarea id="reportText" readonly></textarea>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Name</th><th>WhatsApp</th><th>Message</th></tr>
+            </thead>
+            <tbody id="whatsappRows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel" id="blueprint">
+        <div class="section-head">
+          <div>
+            <h2>Full Project Description</h2>
+            <p>Production website বানাতে backend, database, role, SMS, live monitoring plan.</p>
+          </div>
+        </div>
+        <article class="blueprint">
+          <h3>Core modules</h3>
+          <p>1. Member management: 26 jon member, phone, room/status, active/inactive, minimum meal rule, monthly opening balance.</p>
+          <p>2. Daily meal board: date-wise breakfast/lunch/dinner, F shortcut, guest meal, staying flag, lock-after-day-end option.</p>
+          <p>3. Payment ledger: 10 tarik 1000, 20 tarik 1000, 30 tarik 500, extra collection, refund, due history.</p>
+          <p>4. Expense ledger: food/bazar/chaul meal-rate category; wifi/gas/current/khala/extra shared category; notes and receipt photo.</p>
+          <p>5. Bazar duty: every 4 days schedule, 2 members, advance taka, shopping list, spent, return taka, manager approval.</p>
+          <p>6. Reports: meal rate, total meal, billable meal, guest meal, other cost/member, total bill, joma, mess pabe/member pabe.</p>
+          <h3>Calculation model</h3>
+          <p>Actual meal = breakfast*0.5 + lunch + dinner. Food cost = food + rice + bazar items. Meal rate = food cost / total actual meal. Billable meal = max(actual meal, 50), but zero-meal member = max(25, guest meal). Guest meal fixed minimum-er upor add hobe.</p>
+          <p>Other cost/member = shared expenses / active members. Member total = billable meal*meal rate + other cost/member. Settlement = total bill - total joma.</p>
+          <h3>Production stack</h3>
+          <p>Frontend: Next.js/React. Backend: Supabase or Firebase for live database/auth. Storage: receipt and board photo upload. Hosting: Vercel/Netlify. Database tables: members, meal_entries, payments, expenses, bazar_duties, shopping_items, monthly_settings, audit_logs.</p>
+          <h3>WhatsApp/SMS automation</h3>
+          <p>Static website theke direct automatic WhatsApp send kora jay na; browser security and WhatsApp policy block kore. Best options: WhatsApp Cloud API/Twilio backend, ba click-to-send link. Ei prototype click-to-send link banay. Production backend scheduled reminder pathabe: installment due, bazar duty, month-end settlement.</p>
+          <h3>Roles</h3>
+          <p>Manager full access, assistant manager expense/payment entry, member own meal/payment/report view, auditor read-only month-end check.</p>
+        </article>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
