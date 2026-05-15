@@ -7,14 +7,40 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
+    <section class="auth-screen" id="authScreen">
+      <div class="auth-card">
+        <p class="eyebrow">Private mess account</p>
+        <h1>Gmail diye login korun</h1>
+        <p>
+          Prothom signup kora Gmail manager hobe. Tarpor manager-i data entry,
+          edit, ebong role transfer korte parbe.
+        </p>
+        <form id="authForm">
+          <input id="authName" placeholder="Your name" />
+          <input id="authEmail" type="email" placeholder="example@gmail.com" required />
+          <div class="auth-actions">
+            <button type="submit" data-auth-action="login">Login / Signup</button>
+          </div>
+          <p id="authMessage" class="form-message"></p>
+        </form>
+      </div>
+    </section>
+
     <header class="topbar">
       <div>
         <p class="eyebrow">Mess Manager</p>
         <h1>Meal, Bazar, Joma, Khoros - shob ek jaygay</h1>
       </div>
-      <div class="month-control">
-        <label for="monthInput">Month</label>
-        <input id="monthInput" type="month" />
+      <div class="top-actions">
+        <div class="account-box">
+          <span id="accountEmail">Not logged in</span>
+          <strong id="accountRole">Member</strong>
+          <button id="logoutBtn" class="ghost">Logout</button>
+        </div>
+        <div class="month-control">
+          <label for="monthInput">Month</label>
+          <input id="monthInput" type="month" />
+        </div>
       </div>
     </header>
 
@@ -28,6 +54,7 @@
         <button class="tab" data-tab="payments">Joma</button>
         <button class="tab" data-tab="expenses">Khoros</button>
         <button class="tab" data-tab="bazar">Bazar</button>
+        <button class="tab" data-tab="roles">Roles</button>
         <button class="tab" data-tab="report">Report</button>
         <button class="tab" data-tab="blueprint">Project Plan</button>
       </nav>
@@ -195,6 +222,27 @@
         </div>
       </section>
 
+      <section class="panel" id="roles">
+        <div class="section-head">
+          <div>
+            <h2>Manager Role Transfer</h2>
+            <p>Only current manager can transfer edit and entry power to another signed-up Gmail.</p>
+          </div>
+          <form id="roleForm" class="inline-form manager-only">
+            <select id="roleUserSelect"></select>
+            <button>Transfer manager</button>
+          </form>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Name</th><th>Gmail</th><th>Role</th><th>Can edit</th></tr>
+            </thead>
+            <tbody id="roleRows"></tbody>
+          </table>
+        </div>
+      </section>
+
       <section class="panel" id="report">
         <div class="section-head">
           <div>
@@ -234,6 +282,8 @@
           <p>Other cost/member = shared expenses / active members. Member total = billable meal*meal rate + other cost/member. Settlement = total bill - total joma.</p>
           <h3>Production stack</h3>
           <p>Frontend: Next.js/React. Backend: Supabase or Firebase for live database/auth. Storage: receipt and board photo upload. Hosting: Vercel/Netlify. Database tables: members, meal_entries, payments, expenses, bazar_duties, shopping_items, monthly_settings, audit_logs.</p>
+          <h3>Authentication and roles</h3>
+          <p>Prototype-e Gmail-format login local browser-e save hoy. Real secure system-er jonno Firebase Auth Google Sign-In ba Supabase Google OAuth lagbe. Server-side rule hobe: only manager can insert/update/delete meal, payment, expense, bazar duty, member, and role records. Members can only read own data and final reports.</p>
           <h3>WhatsApp/SMS automation</h3>
           <p>Static website theke direct automatic WhatsApp send kora jay na; browser security and WhatsApp policy block kore. Best options: WhatsApp Cloud API/Twilio backend, ba click-to-send link. Ei prototype click-to-send link banay. Production backend scheduled reminder pathabe: installment due, bazar duty, month-end settlement.</p>
           <h3>Roles</h3>

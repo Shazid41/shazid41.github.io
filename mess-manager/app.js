@@ -1,4 +1,5 @@
 const STORAGE_KEY = "mess-manager-v1";
+const AUTH_KEY = "mess-manager-auth-v1";
 
 const defaultMembers = [
   "Hamidur Vai",
@@ -34,6 +35,17 @@ const isoDate = today.toISOString().slice(0, 10);
 const isoMonth = isoDate.slice(0, 7);
 
 const state = loadState();
+const auth = loadAuth();
+
+function loadAuth() {
+  const saved = localStorage.getItem(AUTH_KEY);
+  if (saved) return JSON.parse(saved);
+  return { currentEmail: "", users: [] };
+}
+
+function saveAuth() {
+  localStorage.setItem(AUTH_KEY, JSON.stringify(auth));
+}
 
 function loadState() {
   const saved = localStorage.getItem(STORAGE_KEY);
@@ -109,6 +121,28 @@ function saveState() {
 
 function money(value) {
   return `৳${Math.round(value).toLocaleString("en-BD")}`;
+}
+
+function currentUser() {
+  return auth.users.find((user) => user.email === auth.currentEmail) || null;
+}
+
+function isManager() {
+  return currentUser()?.role === "manager";
+}
+
+function requireManager() {
+  if (isManager()) return true;
+  alert("Only manager can entry/edit data.");
+  return false;
+}
+
+function normalizeEmail(email) {
+  return email.trim().toLowerCase();
+}
+
+function isGmail(email) {
+  return /^[^\s@]+@gmail\.com$/i.test(email);
 }
 
 function mealValue(entry) {
@@ -229,6 +263,25 @@ function renderMembers() {
   });
 }
 
+function renderRoles() {
+  const rows = auth.users
+    .map(
+      (user) => `<tr>
+        <td>${user.name || "No name"}</td>
+        <td>${user.email}</td>
+        <td>${user.role}</td>
+        <td>${user.role === "manager" ? "Yes" : "No"}</td>
+      </tr>`,
+    )
+    .join("");
+  document.getElementById("roleRows").innerHTML =
+    rows || `<tr><td colspan="4">No signed-up users yet.</td></tr>`;
+
+  document.getElementById("roleUserSelect").innerHTML = auth.users
+    .map((user) => `<option value="${user.email}">${user.name || user.email} - ${user.role}</option>`)
+    .join("");
+}
+
 function renderMealRows() {
   const date = document.getElementById("mealDate").value;
   if (!state.meals[date]) state.meals[date] = {};
@@ -344,11 +397,50 @@ function renderAll() {
   renderStats();
   renderDashboard();
   renderMembers();
+  renderRoles();
   renderMealRows();
   renderPayments();
   renderExpenses();
   renderBazar();
   renderReport();
+  renderAccess();
+}
+
+function renderAuth() {
+  const user = currentUser();
+  document.body.classList.toggle("locked", !user);
+  document.getElementById("accountEmail").textContent = user?.email || "Not logged in";
+  document.getElementById("accountRole").textContent = user?.role || "member";
+  if (user) renderAll();
+}
+
+function renderAccess() {
+  const canEdit = isManager();
+
+  document.querySelectorAll("form").forEach((form) => {
+    if (form.id === "authForm") return;
+    if (form.id === "roleForm") return;
+    form.querySelectorAll("input, select, button").forEach((control) => {
+      control.disabled = !canEdit;
+    });
+  });
+
+  document.querySelectorAll("#saveMealsBtn, #seedBtn").forEach((button) => {
+    button.disabled = !canEdit;
+  });
+
+  document.querySelectorAll(".manager-only input, .manager-only select, .manager-only button").forEach((control) => {
+    control.disabled = !canEdit;
+  });
+
+  const existing = document.querySelector(".readonly-banner");
+  if (!canEdit && !existing) {
+    const banner = document.createElement("div");
+    banner.className = "readonly-banner";
+    banner.textContent = "You are logged in as member. You can monitor reports, but only manager can add or edit entries.";
+    document.querySelector("main").prepend(banner);
+  }
+  if (canEdit && existing) existing.remove();
 }
 
 document.getElementById("monthInput").value = state.month;
@@ -374,6 +466,7 @@ document.getElementById("monthInput").addEventListener("change", (event) => {
 document.getElementById("mealDate").addEventListener("change", renderMealRows);
 
 document.getElementById("saveMealsBtn").addEventListener("click", () => {
+  if (!requireManager()) return;
   const date = document.getElementById("mealDate").value;
   state.meals[date] = {};
   document.querySelectorAll("#mealRows tr").forEach((row) => {
@@ -392,6 +485,7 @@ document.getElementById("saveMealsBtn").addEventListener("click", () => {
 
 document.getElementById("memberForm").addEventListener("submit", (event) => {
   event.preventDefault();
+  if (!requireManager()) return;
   state.members.push({
     id: crypto.randomUUID(),
     name: document.getElementById("memberName").value.trim(),
@@ -406,6 +500,7 @@ document.getElementById("memberForm").addEventListener("submit", (event) => {
 
 document.getElementById("paymentForm").addEventListener("submit", (event) => {
   event.preventDefault();
+  if (!requireManager()) return;
   state.payments.push({
     id: crypto.randomUUID(),
     memberId: document.getElementById("paymentMember").value,
@@ -421,6 +516,7 @@ document.getElementById("paymentForm").addEventListener("submit", (event) => {
 
 document.getElementById("expenseForm").addEventListener("submit", (event) => {
   event.preventDefault();
+  if (!requireManager()) return;
   state.expenses.push({
     id: crypto.randomUUID(),
     date: document.getElementById("expenseDate").value,
@@ -436,6 +532,7 @@ document.getElementById("expenseForm").addEventListener("submit", (event) => {
 
 document.getElementById("bazarForm").addEventListener("submit", (event) => {
   event.preventDefault();
+  if (!requireManager()) return;
   state.bazar.push({
     id: crypto.randomUUID(),
     date: document.getElementById("bazarDate").value,
@@ -455,8 +552,53 @@ document.getElementById("copyReportBtn").addEventListener("click", async () => {
 });
 
 document.getElementById("seedBtn").addEventListener("click", () => {
+  if (!requireManager()) return;
   localStorage.removeItem(STORAGE_KEY);
   location.reload();
 });
 
-renderAll();
+document.getElementById("authForm").addEventListener("submit", (event) => {
+  event.preventDefault();
+  const email = normalizeEmail(document.getElementById("authEmail").value);
+  const name = document.getElementById("authName").value.trim();
+  const message = document.getElementById("authMessage");
+
+  if (!isGmail(email)) {
+    message.textContent = "Please use a valid @gmail.com address.";
+    return;
+  }
+
+  let user = auth.users.find((item) => item.email === email);
+  if (!user) {
+    const role = auth.users.some((item) => item.role === "manager") ? "member" : "manager";
+    user = { email, name: name || email.split("@")[0], role };
+    auth.users.push(user);
+  } else if (name && !user.name) {
+    user.name = name;
+  }
+
+  auth.currentEmail = email;
+  saveAuth();
+  message.textContent = "";
+  renderAuth();
+});
+
+document.getElementById("logoutBtn").addEventListener("click", () => {
+  auth.currentEmail = "";
+  saveAuth();
+  renderAuth();
+});
+
+document.getElementById("roleForm").addEventListener("submit", (event) => {
+  event.preventDefault();
+  if (!requireManager()) return;
+  const nextManagerEmail = document.getElementById("roleUserSelect").value;
+  auth.users = auth.users.map((user) => ({
+    ...user,
+    role: user.email === nextManagerEmail ? "manager" : "member",
+  }));
+  saveAuth();
+  renderAuth();
+});
+
+renderAuth();

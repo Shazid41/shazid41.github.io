@@ -22,6 +22,59 @@ body {
   font-family: Arial, "Noto Sans Bengali", sans-serif;
 }
 
+body.locked main,
+body.locked header {
+  display: none;
+}
+
+.auth-screen {
+  display: none;
+  min-height: 100vh;
+  place-items: center;
+  padding: 24px;
+  background: #19312c;
+}
+
+body.locked .auth-screen {
+  display: grid;
+}
+
+.auth-card {
+  width: min(480px, 100%);
+  background: white;
+  border-radius: 8px;
+  padding: 28px;
+  box-shadow: var(--shadow);
+}
+
+.auth-card h1 {
+  color: var(--ink);
+  font-size: 32px;
+  margin-bottom: 10px;
+}
+
+.auth-card p {
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+#authForm {
+  display: grid;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.auth-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.form-message {
+  min-height: 20px;
+  margin-bottom: 0;
+  color: var(--danger);
+}
+
 button,
 input,
 select,
@@ -37,6 +90,29 @@ textarea {
   padding: 26px clamp(16px, 4vw, 48px);
   background: #19312c;
   color: white;
+}
+
+.top-actions {
+  display: flex;
+  align-items: end;
+  gap: 14px;
+}
+
+.account-box {
+  display: grid;
+  gap: 5px;
+  justify-items: end;
+  min-width: 210px;
+  color: #d8eee9;
+}
+
+.account-box span {
+  font-size: 13px;
+}
+
+.account-box strong {
+  color: #ffffff;
+  text-transform: capitalize;
 }
 
 .eyebrow {
@@ -100,6 +176,22 @@ button {
 button.ghost {
   background: #e6efec;
   color: #0b4f49;
+}
+
+button:disabled,
+input:disabled,
+select:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
+.readonly-banner {
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  border: 1px solid #f1c27d;
+  border-radius: 8px;
+  color: #7c3d00;
+  background: #fff7ed;
 }
 
 .stats-grid {
@@ -287,6 +379,16 @@ textarea#reportText {
   .topbar,
   .section-head {
     flex-direction: column;
+  }
+
+  .top-actions {
+    width: 100%;
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .account-box {
+    justify-items: start;
   }
 
   .stats-grid,
