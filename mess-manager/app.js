@@ -126,7 +126,7 @@ function saveState() {
 }
 
 function money(value) {
-  return `৳${Math.round(value).toLocaleString("en-BD")}`;
+  return `Tk ${Math.round(value).toLocaleString("en-BD")}`;
 }
 
 function currentUser() {
